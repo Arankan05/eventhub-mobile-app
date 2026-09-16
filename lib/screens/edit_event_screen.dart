@@ -1,26 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/event.dart';
 import '../services/event_provider.dart';
-import '../services/auth_provider.dart';
 
-class AddEventScreen extends StatefulWidget {
-  const AddEventScreen({super.key});
+class EditEventScreen extends StatefulWidget {
+  final Event event;
+
+  const EditEventScreen({super.key, required this.event});
 
   @override
-  State<AddEventScreen> createState() => _AddEventScreenState();
+  State<EditEventScreen> createState() => _EditEventScreenState();
 }
 
-class _AddEventScreenState extends State<AddEventScreen> {
+class _EditEventScreenState extends State<EditEventScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _imageController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _dateController = TextEditingController();
-  final _timeController = TextEditingController();
-  final _locationController = TextEditingController();
-  final _priceController = TextEditingController();
-  final _seatsController = TextEditingController();
-  String _selectedCategory = 'Music';
+  late TextEditingController _nameController;
+  late TextEditingController _imageController;
+  late TextEditingController _descriptionController;
+  late TextEditingController _dateController;
+  late TextEditingController _timeController;
+  late TextEditingController _locationController;
+  late TextEditingController _priceController;
+  late TextEditingController _seatsController;
+  late String _selectedCategory;
 
   final List<String> _categories = [
     'Music', 'Sports', 'Technology', 'Education', 'Workshop', 'Business', 'Entertainment', 'Community'
@@ -28,19 +30,29 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   bool _isSaving = false;
 
-  void _saveEvent() async {
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.event.name);
+    _imageController = TextEditingController(text: widget.event.image);
+    _descriptionController = TextEditingController(text: widget.event.description);
+    _dateController = TextEditingController(text: widget.event.date);
+    _timeController = TextEditingController(text: widget.event.time);
+    _locationController = TextEditingController(text: widget.event.location);
+    _priceController = TextEditingController(text: widget.event.price.toString());
+    _seatsController = TextEditingController(text: widget.event.availableSeats.toString());
+    _selectedCategory = widget.event.category;
+  }
+
+  void _updateEvent() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isSaving = true);
       try {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final eventProvider = Provider.of<EventProvider>(context, listen: false);
 
         final eventData = {
-          'organizerId': authProvider.user!.id,
           'name': _nameController.text.trim(),
-          'image': _imageController.text.trim().isEmpty 
-              ? 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=500&q=80' 
-              : _imageController.text.trim(),
+          'image': _imageController.text.trim(),
           'description': _descriptionController.text.trim(),
           'date': _dateController.text.trim(),
           'time': _timeController.text.trim(),
@@ -50,12 +62,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
           'availableSeats': int.parse(_seatsController.text),
         };
 
-        await eventProvider.addEvent(eventData);
+        await eventProvider.updateEvent(widget.event.id, eventData);
         
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Event created successfully!')));
-          _formKey.currentState!.reset();
-          // Optionally navigate back or clear form
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Event updated successfully!')));
+          Navigator.pop(context);
         }
       } catch (e) {
         if (mounted) {
@@ -71,7 +82,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(title: const Text('Add New Event')),
+      appBar: AppBar(title: const Text('Edit Event')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
@@ -88,7 +99,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _imageController,
-                decoration: InputDecoration(hintText: 'Image URL (Optional)', prefixIcon: const Icon(Icons.image), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                decoration: InputDecoration(hintText: 'Image URL', prefixIcon: const Icon(Icons.image), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -138,13 +149,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _priceController,
-                      decoration: InputDecoration(hintText: 'Price (\$)', prefixIcon: const Icon(Icons.attach_money), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                      decoration: InputDecoration(hintText: 'Price', prefixIcon: const Icon(Icons.attach_money), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
                       keyboardType: TextInputType.number,
-                      validator: (v) {
-                        if (v!.isEmpty) return 'Required';
-                        if (double.tryParse(v) == null) return 'Invalid';
-                        return null;
-                      },
+                      validator: (v) => v!.isEmpty ? 'Required' : null,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -153,25 +160,21 @@ class _AddEventScreenState extends State<AddEventScreen> {
                       controller: _seatsController,
                       decoration: InputDecoration(hintText: 'Seats', prefixIcon: const Icon(Icons.chair), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
                       keyboardType: TextInputType.number,
-                      validator: (v) {
-                        if (v!.isEmpty) return 'Required';
-                        if (int.tryParse(v) == null) return 'Invalid';
-                        return null;
-                      },
+                      validator: (v) => v!.isEmpty ? 'Required' : null,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 48),
               ElevatedButton(
-                onPressed: _isSaving ? null : _saveEvent,
+                onPressed: _isSaving ? null : _updateEvent,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 child: _isSaving
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('CREATE EVENT', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                    : const Text('UPDATE EVENT', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1)),
               ),
               const SizedBox(height: 40),
             ],

@@ -67,48 +67,61 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     final bookings = eventProvider.userBookings;
 
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(title: const Text('My Bookings')),
       body: bookings.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.calendar_today_outlined, size: 80, color: Colors.grey[300]),
-                  const SizedBox(height: 16),
-                  const Text('No bookings yet', style: TextStyle(color: Colors.grey, fontSize: 18)),
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.grey[100]!)),
+                    child: Icon(Icons.confirmation_number_outlined, size: 80, color: Colors.grey[300]),
+                  ),
                   const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
-                    child: const Text('Explore Events'),
+                  const Text('No bookings yet', style: TextStyle(color: Colors.black54, fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  const Text('Discover events and book your first ticket!', style: TextStyle(color: Colors.grey)),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: 200,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
+                      child: const Text('Explore Events'),
+                    ),
                   ),
                 ],
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               itemCount: bookings.length,
               itemBuilder: (context, index) {
                 final booking = bookings[index];
                 final isCancelled = booking.status == 'CANCELLED';
 
                 return Card(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(color: Colors.grey[200]!),
+                  ),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
                           children: [
                             ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(12),
                               child: Image.network(
                                 booking.eventImage ?? '',
-                                width: 70,
-                                height: 70,
+                                width: 80,
+                                height: 80,
                                 fit: BoxFit.cover,
-                                errorBuilder: (c, e, s) => Container(color: Colors.grey[200], width: 70, height: 70),
+                                errorBuilder: (c, e, s) => Container(color: Colors.grey[200], width: 80, height: 80, child: const Icon(Icons.image)),
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -116,54 +129,70 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    booking.eventName ?? 'Unknown Event',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(booking.eventDate ?? '', style: const TextStyle(color: Colors.grey)),
-                                  const SizedBox(height: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: isCancelled ? Colors.red[50] : Colors.green[50],
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      booking.status,
-                                      style: TextStyle(
-                                        color: isCancelled ? Colors.red : Colors.green,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          booking.eventName ?? 'Event',
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
-                                    ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: isCancelled ? Colors.red[50] : Colors.green[50],
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          booking.status,
+                                          style: TextStyle(
+                                            color: isCancelled ? Colors.red : Colors.green,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 10,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey),
+                                      const SizedBox(width: 4),
+                                      Text(booking.eventDate ?? '', style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    '\$${booking.totalPrice.toStringAsFixed(2)}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF00B8D4)),
                                   ),
                                 ],
                               ),
                             ),
                           ],
                         ),
-                        const Divider(height: 32),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('${booking.numberOfSeats} Seats', style: const TextStyle(fontWeight: FontWeight.w500)),
-                            Text('\$${booking.totalPrice.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                          ],
-                        ),
-                        if (!isCancelled) ...[
-                          const SizedBox(height: 16),
-                          SizedBox(
+                      ),
+                      if (!isCancelled) ...[
+                        const Divider(height: 1),
+                        InkWell(
+                          onTap: () => _cancelBooking(booking.id),
+                          child: Container(
                             width: double.infinity,
-                            child: OutlinedButton(
-                              onPressed: () => _cancelBooking(booking.id),
-                              style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red)),
-                              child: const Text('CANCEL BOOKING'),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: const Center(
+                              child: Text(
+                                'CANCEL BOOKING',
+                                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
                             ),
                           ),
-                        ],
+                        ),
                       ],
-                    ),
+                    ],
                   ),
                 );
               },

@@ -39,22 +39,21 @@ class _HomeScreenState extends State<HomeScreen> {
     }).toList();
 
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('EventHub', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(
-              'Hello, ${authProvider.user?.name ?? 'Guest'}',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
-            ),
-          ],
-        ),
+        title: const Text('EventHub', style: TextStyle(letterSpacing: 1.2)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none),
-            onPressed: () {},
+            icon: const CircleAvatar(
+              radius: 16,
+              backgroundColor: Colors.white24,
+              child: Icon(Icons.person, size: 20, color: Colors.white),
+            ),
+            onPressed: () {
+              // Navigate to profile tab or show quick menu
+            },
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: RefreshIndicator(
@@ -62,64 +61,99 @@ class _HomeScreenState extends State<HomeScreen> {
         child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF0D47A1),
+                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextField(
-                      onChanged: (value) => setState(() => _searchQuery = value),
-                      decoration: InputDecoration(
-                        hintText: 'Search events...',
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey[200],
-                      ),
+                    Text(
+                      'Hello, ${authProvider.user?.name.split(' ')[0] ?? 'Guest'}!',
+                      style: const TextStyle(color: Colors.white70, fontSize: 16),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 8),
                     const Text(
-                      'Categories',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      height: 40,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _categories.length,
-                        itemBuilder: (context, index) {
-                          final category = _categories[index];
-                          final isSelected = _selectedCategory == category;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8.0),
-                            child: FilterChip(
-                              label: Text(category),
-                              selected: isSelected,
-                              onSelected: (val) => setState(() => _selectedCategory = category),
-                              backgroundColor: Colors.grey[200],
-                              selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                              labelStyle: TextStyle(
-                                color: isSelected ? Theme.of(context).colorScheme.primary : Colors.black,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              ),
-                              showCheckmark: false,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                            ),
-                          );
-                        },
+                      'Discover Amazing Events',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 24),
-                    const Text(
-                      'Upcoming Events',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    TextField(
+                      onChanged: (value) => setState(() => _searchQuery = value),
+                      decoration: InputDecoration(
+                        hintText: 'Search by name or location...',
+                        prefixIcon: const Icon(Icons.search, color: Color(0xFF0D47A1)),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
                     ),
-                    const SizedBox(height: 16),
                   ],
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Categories',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    TextButton(onPressed: () {}, child: const Text('See All')),
+                  ],
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 50,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _categories.length,
+                  itemBuilder: (context, index) {
+                    final category = _categories[index];
+                    final isSelected = _selectedCategory == category;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 10.0),
+                      child: FilterChip(
+                        label: Text(category),
+                        selected: isSelected,
+                        onSelected: (val) => setState(() => _selectedCategory = category),
+                        backgroundColor: Colors.white,
+                        selectedColor: const Color(0xFF0D47A1).withValues(alpha: 0.1),
+                        labelStyle: TextStyle(
+                          color: isSelected ? const Color(0xFF0D47A1) : Colors.grey[700],
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        side: BorderSide(color: isSelected ? const Color(0xFF0D47A1) : Colors.grey[200]!),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                        showCheckmark: false,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 32, 20, 16),
+                child: Text(
+                  _searchQuery.isEmpty ? 'Upcoming Events' : 'Search Results',
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -128,12 +162,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Center(child: CircularProgressIndicator()),
               )
             else if (filteredEvents.isEmpty)
-              const SliverFillRemaining(
-                child: Center(child: Text('No events found')),
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.event_busy, size: 80, color: Colors.grey[300]),
+                      const SizedBox(height: 16),
+                      Text('No events found', style: TextStyle(color: Colors.grey[600], fontSize: 18)),
+                    ],
+                  ),
+                ),
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => EventCard(event: filteredEvents[index]),
@@ -141,6 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
+            const SliverToBoxAdapter(child: SizedBox(height: 32)),
           ],
         ),
       ),

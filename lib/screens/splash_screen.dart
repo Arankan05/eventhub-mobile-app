@@ -39,28 +39,46 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      body: Center(
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF0D47A1), Color(0xFF00B8D4)],
+          ),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.event_seat,
-              size: 100,
-              color: Colors.white,
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: const Icon(
+                Icons.event_seat_rounded,
+                size: 80,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 24),
             const Text(
               'EVENTHUB',
               style: TextStyle(
-                fontSize: 32,
+                fontSize: 36,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
-                letterSpacing: 2,
+                letterSpacing: 4,
               ),
             ),
-            const SizedBox(height: 16),
-            const CircularProgressIndicator(color: Colors.white),
+            const Text(
+              'Your Gateway to Amazing Experiences',
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+            const SizedBox(height: 60),
+            const CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
           ],
         ),
       ),

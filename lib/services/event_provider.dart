@@ -18,6 +18,9 @@ class EventProvider with ChangeNotifier {
     notifyListeners();
     try {
       _events = await _apiService.getEvents();
+    } catch (e) {
+      // Gracefully handle or rethrow to UI
+      print('Fetch Events Error: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

@@ -47,6 +47,19 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  Future<void> updateProfile(String name, String phone) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      _user = await _apiService.updateUser(_user!.id, {'name': name, 'phone': phone});
+      await _storageService.saveUser(_user!);
+      notifyListeners();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> logout() async {
     await _storageService.clearAll();
     _user = null;

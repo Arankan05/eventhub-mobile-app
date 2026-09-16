@@ -14,7 +14,10 @@ app.use(express.json());
 const dbPath = path.resolve(__dirname, 'eventhub.db');
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) console.error('Database connection error:', err.message);
-  else console.log('Connected to SQLite database.');
+  else {
+    console.log('Connected to SQLite database.');
+    db.run("PRAGMA foreign_keys = ON");
+  }
 });
 
 db.serialize(() => {
@@ -57,6 +60,23 @@ db.serialize(() => {
     FOREIGN KEY(userId) REFERENCES users(id),
     FOREIGN KEY(eventId) REFERENCES events(id)
   )`);
+
+  // Seed Events if table is empty
+  db.get("SELECT COUNT(*) as count FROM events", (err, row) => {
+    if (row && row.count === 0) {
+      const sampleEvents = [
+        [1, 'AI & Technology Workshop', 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800', 'Join us for an intensive workshop on the latest AI trends and hands-on coding sessions.', '2026-10-15', '10:00', 'Jaffna', 'Technology', 1500.0, 50],
+        [1, 'Northern Music Festival', 'https://images.unsplash.com/photo-1459749411177-042180ce673c?w=800', 'Experience the soul-stirring melodies of the North at our annual music extravaganza.', '2026-11-20', '18:00', 'Jaffna', 'Music', 2000.0, 100],
+        [1, 'University Sports Meet', 'https://images.unsplash.com/photo-1504450758481-7338ef7524a7?w=800', 'The biggest inter-university sports competition of the year. Come cheer for your team!', '2026-09-25', '08:00', 'Vavuniya', 'Sports', 1000.0, 80],
+        [1, 'Entrepreneurship Meetup', 'https://images.unsplash.com/photo-1475721027785-f74eca99a6f2?w=800', 'Connect with fellow entrepreneurs, share ideas, and build the future of business.', '2026-12-05', '14:00', 'Jaffna', 'Business', 1200.0, 60]
+      ];
+
+      const stmt = db.prepare("INSERT INTO events (organizerId, name, image, description, date, time, location, category, price, availableSeats) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+      sampleEvents.forEach(event => stmt.run(event));
+      stmt.finalize();
+      console.log('Sample events seeded.');
+    }
+  });
 });
 
 // Auth Routes
@@ -82,6 +102,24 @@ app.post('/api/auth/login', (req, res) => {
     }
     delete user.password;
     res.json({ user, token: 'fake-jwt-token' });
+  });
+});
+
+// User Routes
+app.get('/api/users/:id', (req, res) => {
+  db.get(`SELECT id, name, email, phone, role FROM users WHERE id = ?`, [req.params.id], (err, user) => {
+    if (err || !user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  });
+});
+
+app.put('/api/users/:id', (req, res) => {
+  const { name, phone } = req.body;
+  db.run(`UPDATE users SET name = ?, phone = ? WHERE id = ?`, [name, phone, req.params.id], function(err) {
+    if (err) return res.status(400).json({ message: err.message });
+    db.get(`SELECT id, name, email, phone, role FROM users WHERE id = ?`, [req.params.id], (err, user) => {
+      res.json(user);
+    });
   });
 });
 
@@ -134,21 +172,22 @@ app.post('/api/bookings', (req, res) => {
       if (err || !event) return res.status(404).json({ message: 'Event not found' });
       if (event.availableSeats < numberOfSeats) return res.status(400).json({ message: 'Not enough seats available' });
 
-      db.run(`BEGIN TRANSACTION`);
-      const query = `INSERT INTO bookings (userId, eventId, numberOfSeats, totalPrice) VALUES (?, ?, ?, ?)`;
-      db.run(query, [userId, eventId, numberOfSeats, totalPrice], function(err) {
-        if (err) {
-          db.run(`ROLLBACK`);
-          return res.status(400).json({ message: err.message });
-        }
-
-        db.run(`UPDATE events SET availableSeats = availableSeats - ? WHERE id = ?`, [numberOfSeats, eventId], (err) => {
+      db.run(`BEGIN TRANSACTION`, (err) => {
+        const query = `INSERT INTO bookings (userId, eventId, numberOfSeats, totalPrice) VALUES (?, ?, ?, ?)`;
+        db.run(query, [userId, eventId, numberOfSeats, totalPrice], function(err) {
           if (err) {
             db.run(`ROLLBACK`);
             return res.status(400).json({ message: err.message });
           }
-          db.run(`COMMIT`);
-          res.status(201).json({ id: this.lastID, ...req.body, bookingDate: new Date().toISOString(), status: 'CONFIRMED' });
+
+          db.run(`UPDATE events SET availableSeats = availableSeats - ? WHERE id = ?`, [numberOfSeats, eventId], (err) => {
+            if (err) {
+              db.run(`ROLLBACK`);
+              return res.status(400).json({ message: err.message });
+            }
+            db.run(`COMMIT`);
+            res.status(201).json({ id: this.lastID, ...req.body, bookingDate: new Date().toISOString(), status: 'CONFIRMED' });
+          });
         });
       });
     });
