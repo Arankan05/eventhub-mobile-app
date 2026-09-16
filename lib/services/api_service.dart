@@ -6,7 +6,7 @@ import '../models/booking.dart';
 class ApiService {
   // CHANGE THIS TO YOUR COMPUTER'S IP ADDRESS FOR PHYSICAL DEVICE TESTING
   // Example: static const String baseUrl = 'http://192.168.1.10:3000/api';
-  static const String baseUrl = 'http://10.0.2.2:3000/api'; // Emulator default
+  static const String baseUrl = 'http://127.0.0.1:3000/api'; // ADB reverse port forwarding
 
   // Authentication
   Future<Map<String, dynamic>> login(String email, String password) async {
