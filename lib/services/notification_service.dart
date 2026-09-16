@@ -15,6 +15,12 @@ class NotificationService {
     await flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
     );
+
+    // Request permissions for Android 13+
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
   }
 
   Future<void> showNotification({
